@@ -26,7 +26,7 @@ export default function SignupPage() {
         <img
           src="https://images.pexels.com/photos/2008426/pexels-photo-2008426.jpeg"
           alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+          className="absolute inset-0 h-full w-full object-cover"
         />
       </div>
     </div>
