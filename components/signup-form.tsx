@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function LoginForm() {
+export function SignupForm() {
   const router = useRouter()
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
   })
@@ -27,6 +28,12 @@ export function LoginForm() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required"
+    } else if (formData.name.length < 2) {
+      newErrors.name = "Name must have at least 2 characters"
+    }
+
     if (!formData.email.trim()) {
       newErrors.email = "Email is required"
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -35,6 +42,8 @@ export function LoginForm() {
 
     if (!formData.password) {
       newErrors.password = "Password is required"
+    } else if (!/^(?=.*\d)[A-Za-z\d]{8,}$/.test(formData.password)) {
+      newErrors.password = "Password must be at least 8 characters and contain at least one number"
     }
 
     setErrors(newErrors)
@@ -48,16 +57,15 @@ export function LoginForm() {
 
     setLoading(true)
     try {
-      const response = await api.post("/users/login", formData)
+      const response = await api.post("/users", formData)
 
-      console.log("Login successful!", response.data)
-      
-      router.push("/")
+      console.log("Signup successful!", response.data)
+      router.push("/login")
     } catch (error: any) {
       if (error.response) {
         setErrors(prev => ({
           ...prev,
-          submit: error.response.data?.message || "Invalid email or password",
+          submit: error.response.data?.message || "Failed to create account",
         }))
       } else {
         setErrors(prev => ({ ...prev, submit: "An unexpected error occurred" }))
@@ -69,6 +77,20 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          name="name"
+          placeholder="Enter your full name"
+          value={formData.name}
+          onChange={handleChange}
+          disabled={loading}
+          className={errors.name ? "border-red-500" : ""}
+        />
+        {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -102,13 +124,13 @@ export function LoginForm() {
       {errors.submit && <p className="text-sm text-red-500">{errors.submit}</p>}
 
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? "Creating account..." : "Sign up"}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don't have an account?{" "}
-        <a href="/signup" className="underline hover:text-primary">
-          Sign up
+        Already have an account?{" "}
+        <a href="/login" className="underline hover:text-primary">
+          Sign in
         </a>
       </p>
     </form>
