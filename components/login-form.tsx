@@ -87,7 +87,7 @@ export function LoginForm() {
       if (token) {
         setAuthCookie(token)
       }
-      
+
       router.push("/")
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
