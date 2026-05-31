@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import axios from "axios"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -22,6 +24,12 @@ export function SignupForm() {
     setFormData(prev => ({ ...prev, [name]: value }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }))
+    }
+  }
+
+  const handleFocus = (field: keyof typeof formData) => {
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }))
     }
   }
 
@@ -50,6 +58,16 @@ export function SignupForm() {
     return Object.keys(newErrors).length === 0
   }
 
+  const getServerMessage = (data: unknown) => {
+    if (!data || typeof data !== "object" || !("message" in data)) {
+      return null
+    }
+    const message = (data as { message?: unknown }).message
+    return typeof message === "string" && message.trim().length > 0
+      ? message
+      : null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -61,11 +79,12 @@ export function SignupForm() {
 
       console.log("Signup successful!", response.data)
       router.push("/login")
-    } catch (error: any) {
-      if (error.response) {
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const message = getServerMessage(error.response?.data)
         setErrors(prev => ({
           ...prev,
-          submit: error.response.data?.message || "Failed to create account",
+          submit: message ?? "Failed to create account",
         }))
       } else {
         setErrors(prev => ({ ...prev, submit: "An unexpected error occurred" }))
@@ -76,15 +95,17 @@ export function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>
         <Input
           id="name"
           name="name"
           placeholder="Enter your full name"
+          autoComplete="name"
           value={formData.name}
           onChange={handleChange}
+          onFocus={() => handleFocus("name")}
           disabled={loading}
           className={errors.name ? "border-red-500" : ""}
         />
@@ -98,8 +119,10 @@ export function SignupForm() {
           name="email"
           type="email"
           placeholder="Enter your email"
+          autoComplete="email"
           value={formData.email}
           onChange={handleChange}
+          onFocus={() => handleFocus("email")}
           disabled={loading}
           className={errors.email ? "border-red-500" : ""}
         />
@@ -113,8 +136,10 @@ export function SignupForm() {
           name="password"
           type="password"
           placeholder="Enter your password"
+          autoComplete="new-password"
           value={formData.password}
           onChange={handleChange}
+          onFocus={() => handleFocus("password")}
           disabled={loading}
           className={errors.password ? "border-red-500" : ""}
         />
@@ -129,9 +154,9 @@ export function SignupForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <a href="/login" className="underline hover:text-primary">
+        <Link href="/login" className="underline hover:text-primary">
           Sign in
-        </a>
+        </Link>
       </p>
     </form>
   )

@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import axios from "axios"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -24,6 +26,12 @@ export function LoginForm() {
     }
   }
 
+  const handleFocus = (field: keyof typeof formData) => {
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }))
+    }
+  }
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
@@ -41,6 +49,29 @@ export function LoginForm() {
     return Object.keys(newErrors).length === 0
   }
 
+  const setAuthCookie = (token: string) => {
+    const secure = window.location.protocol === "https:"
+    const cookieParts = [
+      `token=${encodeURIComponent(token)}`,
+      "Path=/",
+      "SameSite=Lax",
+    ]
+    if (secure) {
+      cookieParts.push("Secure")
+    }
+    document.cookie = cookieParts.join("; ")
+  }
+
+  const getServerMessage = (data: unknown) => {
+    if (!data || typeof data !== "object" || !("message" in data)) {
+      return null
+    }
+    const message = (data as { message?: unknown }).message
+    return typeof message === "string" && message.trim().length > 0
+      ? message
+      : null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -51,13 +82,19 @@ export function LoginForm() {
       const response = await api.post("/users/login", formData)
 
       console.log("Login successful!", response.data)
+
+      const token = response.data?.token ?? response.data?.accessToken
+      if (token) {
+        setAuthCookie(token)
+      }
       
       router.push("/")
-    } catch (error: any) {
-      if (error.response) {
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const message = getServerMessage(error.response?.data)
         setErrors(prev => ({
           ...prev,
-          submit: error.response.data?.message || "Invalid email or password",
+          submit: message ?? "Invalid email or password",
         }))
       } else {
         setErrors(prev => ({ ...prev, submit: "An unexpected error occurred" }))
@@ -68,7 +105,7 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -76,8 +113,10 @@ export function LoginForm() {
           name="email"
           type="email"
           placeholder="Enter your email"
+          autoComplete="email"
           value={formData.email}
           onChange={handleChange}
+          onFocus={() => handleFocus("email")}
           disabled={loading}
           className={errors.email ? "border-red-500" : ""}
         />
@@ -91,8 +130,10 @@ export function LoginForm() {
           name="password"
           type="password"
           placeholder="Enter your password"
+          autoComplete="current-password"
           value={formData.password}
           onChange={handleChange}
+          onFocus={() => handleFocus("password")}
           disabled={loading}
           className={errors.password ? "border-red-500" : ""}
         />
@@ -106,10 +147,10 @@ export function LoginForm() {
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don't have an account?{" "}
-        <a href="/signup" className="underline hover:text-primary">
+        Don&apos;t have an account?{" "}
+        <Link href="/signup" className="underline hover:text-primary">
           Sign up
-        </a>
+        </Link>
       </p>
     </form>
   )
