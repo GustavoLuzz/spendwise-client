@@ -3,32 +3,35 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import axios from "axios"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   ArrowLeft,
   CheckCircle2,
   ChevronDown,
   HelpCircle,
   Tag,
+  Calendar as CalendarIcon,
+  X,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { api } from "@/lib/api"
-
-type Category = {
-  id: string
-  name: string
-  type: "EXPENSE" | "INCOME"
-}
+import { Calendar } from "@/components/ui/calendar"
+import { fetchCategoriesByType } from "@/lib/categories"
+import { createTransaction } from "@/lib/transactions"
+import type { Category } from "@/lib/categories"
 
 export default function NewTransactionPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnTo = searchParams.get("from") === "transactions" ? "/transactions" : "/"
   const [type, setType] = useState<"expense" | "income">("expense")
   const [formData, setFormData] = useState({
     amount: "",
     description: "",
     categoryId: "",
   })
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [showCalendar, setShowCalendar] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingCategories, setLoadingCategories] = useState(false)
@@ -54,11 +57,10 @@ export default function NewTransactionPage() {
     const fetchCategories = async () => {
       setLoadingCategories(true)
       try {
-        const response = await api.get("/categories/type", {
-          params: { type: type === "expense" ? "EXPENSE" : "INCOME" },
-        })
+        const list = await fetchCategoriesByType(
+          type === "expense" ? "EXPENSE" : "INCOME"
+        )
         if (!active) return
-        const list = Array.isArray(response.data) ? response.data : []
         setCategories(list)
         setFormData(prev => {
           const stillValid = list.some(
@@ -144,12 +146,17 @@ export default function NewTransactionPage() {
 
     setLoading(true)
     try {
-      await api.post("/transactions", {
+      const dateString = selectedDate
+        ? selectedDate.toISOString().split("T")[0]
+        : null
+
+      await createTransaction({
         description: formData.description.trim(),
         amount: amountValue,
         categoryId: formData.categoryId,
+        optionalDate: dateString,
       })
-      router.push("/")
+      router.push(returnTo)
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const message = getServerMessage(error.response?.data)
@@ -174,7 +181,7 @@ export default function NewTransactionPage() {
         <form onSubmit={handleSubmit}>
           <header className="flex items-center justify-between">
             <Link
-              href="/"
+              href={returnTo}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full"
               aria-label="Back"
             >
@@ -299,6 +306,55 @@ export default function NewTransactionPage() {
                 </p>
               )}
             </div>
+
+            <div className="rounded-3xl bg-zinc-100/70 p-5">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.35em] text-zinc-500">
+                <CalendarIcon className="h-4 w-4" />
+                Date (Optional)
+              </div>
+              {selectedDate ? (
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-base font-medium text-zinc-900">
+                    {selectedDate.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "2-digit",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDate(undefined)}
+                    className="text-zinc-400 hover:text-zinc-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowCalendar(!showCalendar)}
+                  className="mt-3 w-full py-2 text-center text-base text-zinc-500 hover:text-zinc-700"
+                >
+                  Pick a date
+                </button>
+              )}
+              {showCalendar && (
+                <div className="mt-4 flex justify-center rounded-lg border border-zinc-200 bg-white p-4">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      setSelectedDate(date)
+                      setShowCalendar(false)
+                    }}
+                    disabled={(date) =>
+                      date > new Date()
+                    }
+                    className="[&_.rdp]:w-fit"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {errors.submit && (
@@ -317,7 +373,7 @@ export default function NewTransactionPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => router.back()}
+              onClick={() => router.push(returnTo)}
               className="h-12 w-full rounded-2xl bg-zinc-200 text-zinc-900 hover:bg-zinc-300"
             >
               Cancel
