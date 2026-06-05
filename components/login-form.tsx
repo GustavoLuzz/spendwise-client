@@ -4,10 +4,10 @@ import { useState } from "react"
 import axios from "axios"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { loginUser } from "@/lib/users"
 
 export function LoginForm() {
   const router = useRouter()
@@ -79,11 +79,11 @@ export function LoginForm() {
 
     setLoading(true)
     try {
-      const response = await api.post("/users/login", formData)
+      const response = await loginUser(formData)
 
       console.log("Login successful!", response.data)
 
-      const token = response.data?.token ?? response.data?.accessToken
+      const token = response.token
       if (token) {
         setAuthCookie(token)
       }

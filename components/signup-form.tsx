@@ -4,10 +4,10 @@ import { useState } from "react"
 import axios from "axios"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { createUser } from "@/lib/users"
 
 export function SignupForm() {
   const router = useRouter()
@@ -75,9 +75,8 @@ export function SignupForm() {
 
     setLoading(true)
     try {
-      const response = await api.post("/users", formData)
+      await createUser(formData)
 
-      console.log("Signup successful!", response.data)
       router.push("/login")
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
