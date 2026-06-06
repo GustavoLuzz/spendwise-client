@@ -1,17 +1,18 @@
 import Image from "next/image"
 import Link from "next/link"
 import { LoginForm } from "@/components/login-form"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function LoginPage() {
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
+    <div className="grid min-h-svh bg-background text-foreground lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-medium">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 16 16"
-              className="h-5 w-5 text-zinc-900"
+              className="h-5 w-5 text-foreground"
               fill="currentColor"
               aria-hidden="true"
             >
@@ -19,6 +20,7 @@ export default function LoginPage() {
             </svg>
             Spendwise
           </Link>
+          <ThemeToggle />
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">

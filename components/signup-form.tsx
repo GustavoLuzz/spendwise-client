@@ -7,10 +7,12 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/lib/i18n"
 import { createUser } from "@/lib/users"
 
 export function SignupForm() {
   const router = useRouter()
+  const { t } = useI18n()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -96,11 +98,11 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
       <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">{t("auth.name")}</Label>
         <Input
           id="name"
           name="name"
-          placeholder="Enter your full name"
+          placeholder={t("auth.namePlaceholder")}
           autoComplete="name"
           value={formData.name}
           onChange={handleChange}
@@ -112,12 +114,12 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("auth.email")}</Label>
         <Input
           id="email"
           name="email"
           type="email"
-          placeholder="Enter your email"
+          placeholder={t("auth.emailPlaceholder")}
           autoComplete="email"
           value={formData.email}
           onChange={handleChange}
@@ -129,12 +131,12 @@ export function SignupForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("auth.password")}</Label>
         <Input
           id="password"
           name="password"
           type="password"
-          placeholder="Enter your password"
+          placeholder={t("auth.passwordPlaceholder")}
           autoComplete="new-password"
           value={formData.password}
           onChange={handleChange}
@@ -148,13 +150,13 @@ export function SignupForm() {
       {errors.submit && <p className="text-sm text-red-500">{errors.submit}</p>}
 
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Creating account..." : "Sign up"}
+        {loading ? t("auth.signingUp") : t("auth.signUp")}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("auth.hasAccount")}{" "}
         <Link href="/login" className="underline hover:text-primary">
-          Sign in
+          {t("auth.signIn")}
         </Link>
       </p>
     </form>
