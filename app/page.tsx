@@ -56,6 +56,30 @@ const getServerMessage = (data: unknown) => {
     : null
 }
 
+type MoneyTextVariant = "hero" | "metric" | "snapshot" | "compact" | "activity"
+
+const getMoneyTextSize = (value: string, variant: MoneyTextVariant) => {
+  const length = value.replace(/\s/g, "").length
+
+  const sizes: Record<MoneyTextVariant, [string, string, string]> = {
+    hero: ["text-[38px]", "text-[30px]", "text-2xl"],
+    metric: ["text-2xl", "text-xl", "text-base"],
+    snapshot: ["text-3xl", "text-2xl", "text-xl"],
+    compact: ["text-sm", "text-[11px]", "text-[10px]"],
+    activity: ["text-sm", "text-xs", "text-[10px]"],
+  }
+
+  if (length <= 14) {
+    return sizes[variant][0]
+  }
+
+  if (length <= 18) {
+    return sizes[variant][1]
+  }
+
+  return sizes[variant][2]
+}
+
 export default function Home() {
   const { locale, t } = useI18n()
   const { currency } = useCurrency()
@@ -147,18 +171,37 @@ export default function Home() {
       : monthlyNet >= 0
         ? t("dashboard.positiveMonth")
         : t("dashboard.expensesHigher")
+  const totalBalanceValue = formatCurrency(
+    loading ? 0 : totalBalance,
+    locale,
+    currency
+  )
+  const monthlyIncomeValue = formatCurrency(
+    loading ? 0 : monthlyIncome,
+    locale,
+    currency
+  )
+  const monthlyExpensesValue = formatCurrency(
+    loading ? 0 : monthlyExpenses,
+    locale,
+    currency
+  )
+  const monthlyNetValue =
+    !loading && monthlyTransactions.length === 0
+      ? t("dashboard.noDataYet")
+      : formatCurrency(loading ? 0 : monthlyNet, locale, currency)
 
   const stats = [
     {
       label: t("dashboard.monthlyIncome"),
-      value: formatCurrency(monthlyIncome, locale, currency),
+      value: monthlyIncomeValue,
       icon: ArrowDown,
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-600",
     },
     {
       label: t("dashboard.monthlyExpenses"),
-      value: formatCurrency(monthlyExpenses, locale, currency),
+      value: monthlyExpensesValue,
       icon: ArrowUp,
       iconBg: "bg-rose-100",
       iconColor: "text-rose-600",
@@ -196,8 +239,10 @@ export default function Home() {
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
             {t("dashboard.totalBalance")}
           </p>
-          <p className="mt-3 text-[38px] font-semibold leading-tight font-mono tabular-nums">
-            {formatCurrency(loading ? 0 : totalBalance, locale, currency)}
+          <p
+            className={`mt-3 max-w-full whitespace-nowrap font-semibold leading-tight font-mono tabular-nums tracking-tight ${getMoneyTextSize(totalBalanceValue, "hero")}`}
+          >
+            {totalBalanceValue}
           </p>
           <div className="mt-3 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
             <span
@@ -263,18 +308,18 @@ export default function Home() {
                 key={item.label}
                 className="flex items-center justify-between rounded-3xl border border-zinc-100 bg-white px-5 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
                     {item.label}
                   </p>
-                  <p className="mt-2 text-2xl font-semibold font-mono tabular-nums">
-                    {loading
-                      ? formatCurrency(0, locale, currency)
-                      : item.value}
+                  <p
+                    className={`mt-2 whitespace-nowrap font-semibold font-mono tabular-nums tracking-tight ${getMoneyTextSize(item.value, "metric")}`}
+                  >
+                    {item.value}
                   </p>
                 </div>
                 <span
-                  className={`inline-flex h-12 w-12 items-center justify-center rounded-full ${item.iconBg}`}
+                  className={`ml-3 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.iconBg}`}
                 >
                   <Icon className={`h-5 w-5 ${item.iconColor}`} />
                 </span>
@@ -285,16 +330,14 @@ export default function Home() {
 
         <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
                 {t("dashboard.monthlySnapshot")}
               </p>
-              <h2 className="mt-3 text-3xl font-semibold font-mono tabular-nums">
-                {loading
-                  ? formatCurrency(0, locale, currency)
-                  : monthlyTransactions.length === 0
-                    ? t("dashboard.noDataYet")
-                    : formatCurrency(monthlyNet, locale, currency)}
+              <h2
+                className={`mt-3 whitespace-nowrap font-semibold font-mono tabular-nums tracking-tight ${getMoneyTextSize(monthlyNetValue, "snapshot")}`}
+              >
+                {monthlyNetValue}
               </h2>
             </div>
             <span
@@ -333,21 +376,25 @@ export default function Home() {
             )}
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-emerald-50 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-700">
+          <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+            <div className="min-w-0 rounded-2xl bg-emerald-50 p-3 sm:p-4">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-emerald-700 sm:text-[10px] sm:tracking-[0.3em]">
                 {t("common.income")}
               </p>
-              <p className="mt-2 text-lg font-semibold font-mono tabular-nums text-emerald-700">
-                {formatCurrency(loading ? 0 : monthlyIncome, locale, currency)}
+              <p
+                className={`mt-2 whitespace-nowrap font-semibold font-mono tabular-nums tracking-tight text-emerald-700 ${getMoneyTextSize(monthlyIncomeValue, "compact")}`}
+              >
+                {monthlyIncomeValue}
               </p>
             </div>
-            <div className="rounded-2xl bg-rose-50 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-rose-700">
+            <div className="min-w-0 rounded-2xl bg-rose-50 p-3 sm:p-4">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-rose-700 sm:text-[10px] sm:tracking-[0.3em]">
                 {t("common.expenses")}
               </p>
-              <p className="mt-2 text-lg font-semibold font-mono tabular-nums text-rose-700">
-                {formatCurrency(loading ? 0 : monthlyExpenses, locale, currency)}
+              <p
+                className={`mt-2 whitespace-nowrap font-semibold font-mono tabular-nums tracking-tight text-rose-700 ${getMoneyTextSize(monthlyExpensesValue, "compact")}`}
+              >
+                {monthlyExpensesValue}
               </p>
             </div>
           </div>
@@ -381,6 +428,11 @@ export default function Home() {
                 const isIncome = item.categoryType === "INCOME"
                 const Icon = isIncome ? Banknote : Receipt
                 const signedAmount = getSignedAmount(item)
+                const recentAmount = `${signedAmount > 0 ? "+" : "-"} ${formatCurrency(
+                  Math.abs(signedAmount),
+                  locale,
+                  currency
+                )}`
 
                 return (
                   <div
@@ -408,16 +460,11 @@ export default function Home() {
                       </div>
                     </div>
                     <p
-                      className={`shrink-0 text-sm font-semibold ${
+                      className={`ml-2 shrink-0 whitespace-nowrap font-semibold ${
                         isIncome ? "text-emerald-600" : "text-rose-600"
-                      } font-mono tabular-nums`}
+                      } font-mono tabular-nums ${getMoneyTextSize(recentAmount, "activity")}`}
                     >
-                      {signedAmount > 0 ? "+" : "-"}{" "}
-                      {formatCurrency(
-                        Math.abs(signedAmount),
-                        locale,
-                        currency
-                      )}
+                      {recentAmount}
                     </p>
                   </div>
                 )
