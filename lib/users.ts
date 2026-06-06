@@ -11,18 +11,13 @@ export type UserLoginPayload = {
   password: string
 }
 
-type AuthResponse = {
-  token?: string
-  accessToken?: string
-}
-
-const getTokenFromResponse = (data: unknown) => {
-  if (!data || typeof data !== "object") {
-    return undefined
-  }
-
-  const response = data as AuthResponse
-  return response.token ?? response.accessToken
+export type AuthenticatedUser = {
+  id: string
+  name: string
+  email: string
+  role: string
+  createdAt: string
+  updatedAt: string
 }
 
 export async function createUser(payload: UserSignupPayload) {
@@ -31,10 +26,19 @@ export async function createUser(payload: UserSignupPayload) {
 }
 
 export async function loginUser(payload: UserLoginPayload) {
-  const response = await api.post("/users/login", payload)
+  const response = await api.post(
+    "/api/auth/login",
+    payload,
+    { baseURL: window.location.origin }
+  )
+  return response.data
+}
 
-  return {
-    data: response.data,
-    token: getTokenFromResponse(response.data),
-  }
+export async function fetchAuthenticatedUser() {
+  const response = await api.get("/users/authenticated")
+  return response.data as AuthenticatedUser
+}
+
+export async function logoutUser() {
+  await api.post("/users/logout")
 }

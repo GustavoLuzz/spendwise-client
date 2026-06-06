@@ -6,6 +6,12 @@ export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAuthRoute = pathname === "/login" || pathname === "/signup"
+  const isLoginApiRoute = pathname === "/api/auth/login"
+  const isBackendApiRoute = pathname.startsWith("/api/backend/")
+
+  if (isLoginApiRoute || isBackendApiRoute) {
+    return NextResponse.next()
+  }
 
   if (!isAuthRoute && !token) {
     return NextResponse.redirect(new URL("/login", request.url))

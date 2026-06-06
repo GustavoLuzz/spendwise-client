@@ -3,14 +3,14 @@
 import { useState } from "react"
 import axios from "axios"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/lib/i18n"
 import { loginUser } from "@/lib/users"
 
 export function LoginForm() {
-  const router = useRouter()
+  const { t } = useI18n()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -49,19 +49,6 @@ export function LoginForm() {
     return Object.keys(newErrors).length === 0
   }
 
-  const setAuthCookie = (token: string) => {
-    const secure = window.location.protocol === "https:"
-    const cookieParts = [
-      `token=${encodeURIComponent(token)}`,
-      "Path=/",
-      "SameSite=Lax",
-    ]
-    if (secure) {
-      cookieParts.push("Secure")
-    }
-    document.cookie = cookieParts.join("; ")
-  }
-
   const getServerMessage = (data: unknown) => {
     if (!data || typeof data !== "object" || !("message" in data)) {
       return null
@@ -79,16 +66,8 @@ export function LoginForm() {
 
     setLoading(true)
     try {
-      const response = await loginUser(formData)
-
-      console.log("Login successful!", response.data)
-
-      const token = response.token
-      if (token) {
-        setAuthCookie(token)
-      }
-
-      router.push("/")
+      await loginUser(formData)
+      window.location.replace("/")
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const message = getServerMessage(error.response?.data)
@@ -105,14 +84,20 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+    <form
+      action="/api/auth/login"
+      method="post"
+      onSubmit={handleSubmit}
+      className="space-y-4"
+      noValidate
+    >
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("auth.email")}</Label>
         <Input
           id="email"
           name="email"
           type="email"
-          placeholder="Enter your email"
+          placeholder={t("auth.emailPlaceholder")}
           autoComplete="email"
           value={formData.email}
           onChange={handleChange}
@@ -124,12 +109,12 @@ export function LoginForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">{t("auth.password")}</Label>
         <Input
           id="password"
           name="password"
           type="password"
-          placeholder="Enter your password"
+          placeholder={t("auth.passwordPlaceholder")}
           autoComplete="current-password"
           value={formData.password}
           onChange={handleChange}
@@ -143,13 +128,13 @@ export function LoginForm() {
       {errors.submit && <p className="text-sm text-red-500">{errors.submit}</p>}
 
       <Button type="submit" className="w-full" disabled={loading}>
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? t("auth.signingIn") : t("auth.signIn")}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href="/signup" className="underline hover:text-primary">
-          Sign up
+          {t("auth.signUp")}
         </Link>
       </p>
     </form>
