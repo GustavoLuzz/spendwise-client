@@ -21,6 +21,7 @@ export type CreateTransactionPayload = {
 export type FetchTransactionsParams = {
   page?: number
   size?: number
+  sort?: string
   period?: "week" | "month" | "year" | "all"
   categoryId?: string
   categoryType?: "EXPENSE" | "INCOME"

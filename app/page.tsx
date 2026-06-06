@@ -1,98 +1,180 @@
+"use client"
+
+import axios from "axios"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
   Banknote,
-  Car,
-  LayoutGrid,
+  Loader2,
   Plus,
   Receipt,
-  ShoppingBag,
-  Tags,
   TrendingUp,
-  User,
-  Utensils,
 } from "lucide-react"
 
+import { AppFooterNav } from "@/components/app-footer-nav"
 import { Button } from "@/components/ui/button"
+import { formatCurrency, useCurrency } from "@/lib/currency"
+import { useI18n } from "@/lib/i18n"
+import { fetchTransactions, type Transaction } from "@/lib/transactions"
 
-const stats = [
-  {
-    label: "Monthly Income",
-    value: "$8,400.00",
-    icon: ArrowDown,
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-600",
-  },
-  {
-    label: "Monthly Expenses",
-    value: "$3,250.40",
-    icon: ArrowUp,
-    iconBg: "bg-rose-100",
-    iconColor: "text-rose-600",
-  },
-]
+const parseDateOnly = (value: string) => {
+  const [year, month, day] = value.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
 
-const chartData = [
-  { month: "Jan", value: 28 },
-  { month: "Feb", value: 34 },
-  { month: "Mar", value: 24 },
-  { month: "Apr", value: 42 },
-  { month: "May", value: 56 },
-  { month: "Jun", value: 38 },
-  { month: "Jul", value: 70 },
-]
+const getTransactionDate = (transaction: Transaction) =>
+  transaction.optionalDate
+    ? parseDateOnly(transaction.optionalDate)
+    : new Date(transaction.createdAt)
 
-const recentActivity = [
-  {
-    name: "Apple Store",
-    date: "July 24, 2023",
-    amount: "- $1,299.00",
-    amountClass: "text-zinc-900",
-    icon: ShoppingBag,
-  },
-  {
-    name: "The Nomad Bistro",
-    date: "July 22, 2023",
-    amount: "- $84.20",
-    amountClass: "text-zinc-900",
-    icon: Utensils,
-  },
-  {
-    name: "Monthly Salary",
-    date: "July 20, 2023",
-    amount: "+ $8,400.00",
-    amountClass: "text-emerald-600",
-    icon: Banknote,
-  },
-  {
-    name: "Uber Trip",
-    date: "July 18, 2023",
-    amount: "- $22.50",
-    amountClass: "text-zinc-900",
-    icon: Car,
-  },
-]
+const getSignedAmount = (transaction: Transaction) => {
+  const amount = Math.abs(Number(transaction.amount))
+  return transaction.categoryType === "EXPENSE" ? -amount : amount
+}
 
-const navItems = [
-  { label: "Dash", icon: LayoutGrid, href: "/" },
-  { label: "Trans", icon: Receipt, href: "/transactions" },
-  { label: "Cats", icon: Tags, href: "/categories" },
-  { label: "User", icon: User, href: "/profile" },
-]
+const isCurrentMonth = (transaction: Transaction) => {
+  const date = getTransactionDate(transaction)
+  const today = new Date()
+
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth()
+  )
+}
+
+const getServerMessage = (data: unknown) => {
+  if (!data || typeof data !== "object" || !("message" in data)) {
+    return null
+  }
+
+  const message = (data as { message?: unknown }).message
+  return typeof message === "string" && message.trim().length > 0
+    ? message
+    : null
+}
 
 export default function Home() {
+  const { locale, t } = useI18n()
+  const { currency } = useCurrency()
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    let active = true
+
+    const loadDashboard = async () => {
+      setLoading(true)
+      setError("")
+
+      try {
+        const response = await fetchTransactions({
+          page: 0,
+          size: 1000,
+          period: "all",
+        })
+
+        if (active) {
+          setTransactions(response.content)
+        }
+      } catch (error: unknown) {
+        if (!active) return
+
+        if (axios.isAxiosError(error)) {
+          setError(
+            getServerMessage(error.response?.data) ?? "Unable to load dashboard"
+          )
+        } else {
+          setError("Unable to load dashboard")
+        }
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadDashboard()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const totalBalance = transactions.reduce(
+    (total, transaction) => total + getSignedAmount(transaction),
+    0
+  )
+  const monthlyTransactions = transactions.filter(isCurrentMonth)
+  const monthlyIncome = monthlyTransactions.reduce((total, transaction) => {
+    if (transaction.categoryType === "EXPENSE") {
+      return total
+    }
+
+    return total + Math.abs(Number(transaction.amount))
+  }, 0)
+  const monthlyExpenses = monthlyTransactions.reduce((total, transaction) => {
+    if (transaction.categoryType !== "EXPENSE") {
+      return total
+    }
+
+    return total + Math.abs(Number(transaction.amount))
+  }, 0)
+  const recentActivity = [...transactions]
+    .sort(
+      (a, b) =>
+        getTransactionDate(b).getTime() - getTransactionDate(a).getTime() ||
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 4)
+  const balanceTrend =
+    monthlyIncome + monthlyExpenses > 0
+      ? ((monthlyIncome - monthlyExpenses) /
+          (monthlyIncome + monthlyExpenses)) *
+        100
+      : 0
+  const monthlyNet = monthlyIncome - monthlyExpenses
+  const monthlyTotal = monthlyIncome + monthlyExpenses
+  const incomeShare = monthlyTotal > 0 ? (monthlyIncome / monthlyTotal) * 100 : 0
+  const expenseShare =
+    monthlyTotal > 0 ? (monthlyExpenses / monthlyTotal) * 100 : 0
+  const snapshotMessage =
+    monthlyTransactions.length === 0
+      ? t("dashboard.addFirstMonthly")
+      : monthlyNet >= 0
+        ? t("dashboard.positiveMonth")
+        : t("dashboard.expensesHigher")
+
+  const stats = [
+    {
+      label: t("dashboard.monthlyIncome"),
+      value: formatCurrency(monthlyIncome, locale, currency),
+      icon: ArrowDown,
+      iconBg: "bg-emerald-100",
+      iconColor: "text-emerald-600",
+    },
+    {
+      label: t("dashboard.monthlyExpenses"),
+      value: formatCurrency(monthlyExpenses, locale, currency),
+      icon: ArrowUp,
+      iconBg: "bg-rose-100",
+      iconColor: "text-rose-600",
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900">
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       <div className="mx-auto w-full max-w-sm px-4 pb-28 pt-6">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-lg font-semibold">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-white">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 16 16"
-                className="h-5 w-5 text-zinc-900"
+                className="h-5 w-5 text-zinc-900 dark:text-zinc-50"
                 fill="currentColor"
                 aria-hidden="true"
               >
@@ -103,26 +185,33 @@ export default function Home() {
           </div>
           <Link
             href="/profile"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-700"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-700 dark:text-zinc-300"
             aria-label="Go to profile"
           >
             <ArrowRight className="h-5 w-5" />
           </Link>
         </header>
 
-        <section className="mt-6 rounded-3xl bg-gradient-to-br from-white to-zinc-200/80 p-6 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.35em] text-zinc-500">
-            Total Balance
+        <section className="mt-6 rounded-3xl bg-gradient-to-br from-white to-zinc-200/80 p-6 shadow-sm dark:from-zinc-900 dark:to-zinc-800">
+          <p className="text-xs uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
+            {t("dashboard.totalBalance")}
           </p>
           <p className="mt-3 text-[38px] font-semibold leading-tight font-mono tabular-nums">
-            $42,850.20
+            {formatCurrency(loading ? 0 : totalBalance, locale, currency)}
           </p>
-          <div className="mt-3 flex items-center gap-2 text-sm text-zinc-500">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+          <div className="mt-3 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                balanceTrend >= 0
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-rose-100 text-rose-700"
+              }`}
+            >
               <TrendingUp className="h-3 w-3" />
-              +12.5%
+              {balanceTrend >= 0 ? "+" : ""}
+              {balanceTrend.toFixed(1)}%
             </span>
-            vs last month
+            {t("dashboard.currentMonthNet")}
           </div>
           <div className="mt-6 flex gap-3">
             <Button
@@ -132,22 +221,39 @@ export default function Home() {
               <Link href="/transactions/new">
                 <Plus className="h-4 w-4" />
                 <span className="text-left leading-tight">
-                  New
-                  <br />
-                  Transaction
+                  {t("dashboard.newTransaction")
+                    .split("\n")
+                    .map((line) => (
+                      <span key={line} className="block">
+                        {line}
+                      </span>
+                    ))}
                 </span>
               </Link>
             </Button>
             <Button
+              asChild
               variant="secondary"
-              className="h-12 flex-1 rounded-2xl bg-zinc-200 text-sm text-zinc-900 hover:bg-zinc-300"
+              className="h-12 flex-1 rounded-2xl bg-zinc-200 text-sm text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700"
             >
-              View
-              <br />
-              Analytics
+              <Link href="/transactions">
+                {t("dashboard.viewAnalytics")
+                  .split("\n")
+                  .map((line) => (
+                    <span key={line} className="block">
+                      {line}
+                    </span>
+                  ))}
+              </Link>
             </Button>
           </div>
         </section>
+
+        {error && (
+          <p className="mt-4 rounded-3xl bg-rose-50 p-4 text-sm text-rose-600">
+            {error}
+          </p>
+        )}
 
         <div className="mt-6 grid gap-4">
           {stats.map((item) => {
@@ -155,14 +261,16 @@ export default function Home() {
             return (
               <div
                 key={item.label}
-                className="flex items-center justify-between rounded-3xl border border-zinc-100 bg-white px-5 py-4 shadow-sm"
+                className="flex items-center justify-between rounded-3xl border border-zinc-100 bg-white px-5 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-500">
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
                     {item.label}
                   </p>
                   <p className="mt-2 text-2xl font-semibold font-mono tabular-nums">
-                    {item.value}
+                    {loading
+                      ? formatCurrency(0, locale, currency)
+                      : item.value}
                   </p>
                 </div>
                 <span
@@ -175,98 +283,162 @@ export default function Home() {
           })}
         </div>
 
-        <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold leading-tight">
-              Balance
-              <br />
-              Evolution
-            </h2>
-            <div className="flex gap-2 rounded-full bg-zinc-100 p-1 text-xs font-semibold text-zinc-500">
-              {["6M", "1Y", "ALL"].map((label) => (
-                <span
-                  key={label}
-                  className={`rounded-full px-3 py-1 ${
-                    label === "6M" ? "bg-white text-zinc-900 shadow-sm" : ""
-                  }`}
-                >
-                  {label}
-                </span>
-              ))}
+        <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
+                {t("dashboard.monthlySnapshot")}
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold font-mono tabular-nums">
+                {loading
+                  ? formatCurrency(0, locale, currency)
+                  : monthlyTransactions.length === 0
+                    ? t("dashboard.noDataYet")
+                    : formatCurrency(monthlyNet, locale, currency)}
+              </h2>
             </div>
+            <span
+              className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+                monthlyNet >= 0
+                  ? "bg-emerald-100 text-emerald-600"
+                  : "bg-rose-100 text-rose-600"
+              }`}
+            >
+              {monthlyNet >= 0 ? (
+                <ArrowDown className="h-5 w-5" />
+              ) : (
+                <ArrowUp className="h-5 w-5" />
+              )}
+            </span>
           </div>
-          <div className="mt-6">
-            <div className="relative h-40">
-              <div className="absolute inset-x-0 top-4 h-px bg-zinc-100" />
-              <div className="absolute inset-x-0 top-1/2 h-px bg-zinc-100" />
-              <div className="absolute inset-x-0 bottom-4 h-px bg-zinc-100" />
-              <div className="flex h-full items-end gap-0">
-                {chartData.map((item) => (
-                  <div key={item.month} className="flex flex-1 flex-col items-center">
-                    <div
-                      className={`w-full rounded-t-xl ${
-                        item.month === "Jul"
-                          ? "bg-zinc-900"
-                          : "bg-zinc-200"
-                      }`}
-                      style={{ height: `${item.value}%` }}
-                    />
-                  </div>
-                ))}
+
+          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+            {loading ? t("dashboard.loadingInsight") : snapshotMessage}
+          </p>
+
+          <div className="mt-6 h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+            {monthlyTotal > 0 ? (
+              <div className="flex h-full w-full">
+                <div
+                  className="h-full bg-emerald-500"
+                  style={{ width: `${incomeShare}%` }}
+                />
+                <div
+                  className="h-full bg-rose-500"
+                  style={{ width: `${expenseShare}%` }}
+                />
               </div>
+            ) : (
+              <div className="h-full w-full bg-zinc-200 dark:bg-zinc-700" />
+            )}
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-emerald-50 p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-emerald-700">
+                {t("common.income")}
+              </p>
+              <p className="mt-2 text-lg font-semibold font-mono tabular-nums text-emerald-700">
+                {formatCurrency(loading ? 0 : monthlyIncome, locale, currency)}
+              </p>
             </div>
-            <div className="mt-4 flex justify-between text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-400">
-              {chartData.map((item) => (
-                <span key={item.month}>{item.month}</span>
-              ))}
+            <div className="rounded-2xl bg-rose-50 p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-rose-700">
+                {t("common.expenses")}
+              </p>
+              <p className="mt-2 text-lg font-semibold font-mono tabular-nums text-rose-700">
+                {formatCurrency(loading ? 0 : monthlyExpenses, locale, currency)}
+              </p>
             </div>
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm">
+        <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Recent Activity</h2>
-            <Link href="/transactions" className="text-sm text-zinc-500">
-              View All
+            <h2 className="text-lg font-semibold">
+              {t("dashboard.recentActivity")}
+            </h2>
+            <Link href="/transactions" className="text-sm text-zinc-500 dark:text-zinc-400">
+              {t("dashboard.viewAll")}
             </Link>
           </div>
           <div className="mt-4 space-y-4">
-            {recentActivity.map((item) => {
-              const Icon = item.icon
-              return (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100">
-                      <Icon className="h-5 w-5 text-zinc-700" />
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold">{item.name}</p>
-                      <p className="text-xs text-zinc-500">{item.date}</p>
-                    </div>
-                  </div>
-                  <p
-                    className={`text-sm font-semibold ${item.amountClass} font-mono tabular-nums`}
+            {loading ? (
+              <div className="flex items-center gap-3 rounded-3xl bg-zinc-50 p-4 dark:bg-zinc-800">
+                <Loader2 className="h-4 w-4 animate-spin text-zinc-500 dark:text-zinc-400" />
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {t("dashboard.loadingActivity")}
+                </p>
+              </div>
+            ) : recentActivity.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50 p-5 text-center dark:border-zinc-700 dark:bg-zinc-800">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  {t("dashboard.noTransactions")}
+                </p>
+              </div>
+            ) : (
+              recentActivity.map((item) => {
+                const isIncome = item.categoryType === "INCOME"
+                const Icon = isIncome ? Banknote : Receipt
+                const signedAmount = getSignedAmount(item)
+
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between"
                   >
-                    {item.amount}
-                  </p>
-                </div>
-              )
-            })}
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
+                        <Icon className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
+                      </span>
+                      <div className="min-w-0">
+                        <p
+                          className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold"
+                          title={item.description}
+                        >
+                          {item.description}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          {getTransactionDate(item).toLocaleDateString(locale, {
+                            month: "long",
+                            day: "2-digit",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <p
+                      className={`shrink-0 text-sm font-semibold ${
+                        isIncome ? "text-emerald-600" : "text-rose-600"
+                      } font-mono tabular-nums`}
+                    >
+                      {signedAmount > 0 ? "+" : "-"}{" "}
+                      {formatCurrency(
+                        Math.abs(signedAmount),
+                        locale,
+                        currency
+                      )}
+                    </p>
+                  </div>
+                )
+              })
+            )}
           </div>
         </section>
 
         <section className="relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 p-6 text-white shadow-sm">
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-400">
-            Savings Goal
+            {t("dashboard.savingsGoal")}
           </p>
-          <p className="mt-3 text-lg font-semibold">New Tesla Model S</p>
+          <p className="mt-3 text-lg font-semibold">
+            {t("dashboard.savingsGoalName")}
+          </p>
           <div className="mt-5 h-2 w-full rounded-full bg-white/20">
             <div className="h-2 w-2/3 rounded-full bg-white" />
           </div>
-          <p className="mt-2 text-xs text-zinc-400">65% Completed</p>
+          <p className="mt-2 text-xs text-zinc-400">
+            {t("dashboard.savingsGoalProgress")}
+          </p>
           <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-full border border-white/10" />
         </section>
       </div>
@@ -282,32 +454,7 @@ export default function Home() {
         </Link>
       </Button>
 
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-sm items-center justify-between px-6 py-3">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = item.href === "/"
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                className={`flex flex-col items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.3em] ${
-                  isActive ? "text-zinc-900" : "text-zinc-400"
-                }`}
-              >
-                <span
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${
-                    isActive ? "bg-zinc-100" : ""
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                </span>
-                {item.label}
-              </Link>
-            )
-          })}
-        </div>
-      </nav>
+      <AppFooterNav activeHref="/" />
     </div>
   )
 }
