@@ -26,7 +26,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { fetchCategoriesByType } from "@/lib/categories"
 import { getCategoryLabel } from "@/lib/category-label"
-import { getCurrencySymbol, useCurrency } from "@/lib/currency"
+import {
+  formatMoneyInput,
+  getCurrencySymbol,
+  parseMoneyInput,
+  useCurrency,
+} from "@/lib/currency"
 import { useI18n } from "@/lib/i18n"
 import { createTransaction } from "@/lib/transactions"
 import type { Category } from "@/lib/categories"
@@ -50,6 +55,8 @@ const helpItems = [
   },
 ]
 
+const MAX_TRANSACTION_AMOUNT = 10_000_000
+
 function NewTransactionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -69,6 +76,7 @@ function NewTransactionContent() {
   const [loadingCategories, setLoadingCategories] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const loadCategoriesError = t("newTransaction.loadCategoriesError")
 
   const selectedCategory = useMemo(
     () => categories.find(category => category.id === formData.categoryId),
@@ -115,12 +123,12 @@ function NewTransactionContent() {
           const message = getServerMessage(error.response?.data)
           setErrors(prev => ({
             ...prev,
-            category: message ?? "Unable to load categories",
+            category: message ?? loadCategoriesError,
           }))
         } else {
           setErrors(prev => ({
             ...prev,
-            category: "Unable to load categories",
+            category: loadCategoriesError,
           }))
         }
       } finally {
@@ -133,10 +141,29 @@ function NewTransactionContent() {
     return () => {
       active = false
     }
-  }, [type])
+  }, [type, loadCategoriesError])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
+
+    if (name === "amount") {
+      const formattedValue = formatMoneyInput(value, currency)
+
+      if (formattedValue === null) {
+        setErrors(prev => ({
+          ...prev,
+          amount: t("newTransaction.amountInvalid"),
+        }))
+        return
+      }
+
+      setFormData(prev => ({ ...prev, amount: formattedValue }))
+      if (errors.amount) {
+        setErrors(prev => ({ ...prev, amount: "" }))
+      }
+      return
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }))
@@ -152,22 +179,24 @@ function NewTransactionContent() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
-    const amountValue = Number.parseFloat(
-      formData.amount.replace(",", ".")
-    )
+    const amountValue = parseMoneyInput(formData.amount, currency)
 
-    if (!formData.amount.trim() || Number.isNaN(amountValue)) {
-      newErrors.amount = "Amount is required"
+    if (!formData.amount.trim()) {
+      newErrors.amount = t("newTransaction.amountRequired")
+    } else if (amountValue === null) {
+      newErrors.amount = t("newTransaction.amountInvalid")
     } else if (amountValue <= 0) {
-      newErrors.amount = "Amount must be greater than zero"
+      newErrors.amount = t("newTransaction.amountPositive")
+    } else if (amountValue > MAX_TRANSACTION_AMOUNT) {
+      newErrors.amount = t("newTransaction.amountMax")
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = "Description is required"
+      newErrors.description = t("newTransaction.descriptionRequired")
     }
 
     if (!formData.categoryId) {
-      newErrors.categoryId = "Category is required"
+      newErrors.categoryId = t("newTransaction.categoryRequired")
     }
 
     setErrors(newErrors)
@@ -178,9 +207,8 @@ function NewTransactionContent() {
     e.preventDefault()
     if (!validateForm()) return
 
-    const amountValue = Number.parseFloat(
-      formData.amount.replace(",", ".")
-    )
+    const amountValue = parseMoneyInput(formData.amount, currency)
+    if (amountValue === null) return
 
     setLoading(true)
     try {
@@ -200,12 +228,12 @@ function NewTransactionContent() {
         const message = getServerMessage(error.response?.data)
         setErrors(prev => ({
           ...prev,
-          submit: message ?? "Unable to register transaction",
+          submit: message ?? t("newTransaction.submitError"),
         }))
       } else {
         setErrors(prev => ({
           ...prev,
-          submit: "Unable to register transaction",
+          submit: t("newTransaction.submitError"),
         }))
       }
     } finally {
@@ -248,10 +276,12 @@ function NewTransactionContent() {
                 type="text"
                 name="amount"
                 inputMode="decimal"
-                placeholder={locale === "pt-BR" ? "0,00" : "0.00"}
+                maxLength={16}
+                placeholder={currency === "BRL" ? "0,00" : "0.00"}
                 value={formData.amount}
                 onChange={handleChange}
                 disabled={loading}
+                aria-invalid={Boolean(errors.amount)}
                 className={`w-44 border-b-2 bg-transparent pb-3 text-center text-6xl font-semibold font-mono tabular-nums text-zinc-700 placeholder:text-zinc-300 outline-none dark:text-zinc-100 dark:placeholder:text-zinc-700 ${
                   errors.amount ? "border-rose-500" : "border-zinc-900"
                 }`}
