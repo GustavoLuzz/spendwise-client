@@ -10,6 +10,10 @@ import { Label } from "@/components/ui/label"
 import { useI18n } from "@/lib/i18n"
 import { createUser } from "@/lib/users"
 
+const PASSWORD_MIN_LENGTH = 8
+const PASSWORD_MAX_LENGTH = 72
+const PASSWORD_CONTENT_PATTERN = /^(?=.*\p{L})(?=.*\d)[^\p{Cc}]+$/u
+
 export function SignupForm() {
   const router = useRouter()
   const { t } = useI18n()
@@ -39,21 +43,26 @@ export function SignupForm() {
     const newErrors: Record<string, string> = {}
 
     if (!formData.name.trim()) {
-      newErrors.name = "Name is required"
+      newErrors.name = t("auth.nameRequired")
     } else if (formData.name.length < 2) {
-      newErrors.name = "Name must have at least 2 characters"
+      newErrors.name = t("auth.nameMin")
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
+      newErrors.email = t("auth.emailRequired")
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Email must be valid"
+      newErrors.email = t("auth.emailInvalid")
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required"
-    } else if (!/^(?=.*\d)[A-Za-z\d]{8,}$/.test(formData.password)) {
-      newErrors.password = "Password must be at least 8 characters and contain at least one number"
+      newErrors.password = t("auth.passwordRequired")
+    } else if (
+      formData.password.length < PASSWORD_MIN_LENGTH ||
+      formData.password.length > PASSWORD_MAX_LENGTH
+    ) {
+      newErrors.password = t("auth.passwordLength")
+    } else if (!PASSWORD_CONTENT_PATTERN.test(formData.password)) {
+      newErrors.password = t("auth.passwordPattern")
     }
 
     setErrors(newErrors)
@@ -70,6 +79,30 @@ export function SignupForm() {
       : null
   }
 
+  const translateServerMessage = (message: string | null) => {
+    if (!message) return null
+
+    const normalizedMessage = message.toLowerCase()
+
+    if (normalizedMessage.includes("email already registered")) {
+      return t("auth.emailAlreadyRegistered")
+    }
+
+    if (normalizedMessage.includes("password must be between")) {
+      return t("auth.passwordLength")
+    }
+
+    if (normalizedMessage.includes("password must include")) {
+      return t("auth.passwordPattern")
+    }
+
+    if (normalizedMessage.includes("email must be valid")) {
+      return t("auth.emailInvalid")
+    }
+
+    return message
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -82,13 +115,15 @@ export function SignupForm() {
       router.push("/login")
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        const message = getServerMessage(error.response?.data)
+        const message = translateServerMessage(
+          getServerMessage(error.response?.data)
+        )
         setErrors(prev => ({
           ...prev,
-          submit: message ?? "Failed to create account",
+          submit: message ?? t("auth.createAccountFailed"),
         }))
       } else {
-        setErrors(prev => ({ ...prev, submit: "An unexpected error occurred" }))
+        setErrors(prev => ({ ...prev, submit: t("auth.unexpectedError") }))
       }
     } finally {
       setLoading(false)
@@ -145,6 +180,11 @@ export function SignupForm() {
           className={errors.password ? "border-red-500" : ""}
         />
         {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+        {!errors.password && (
+          <p className="text-xs text-muted-foreground">
+            {t("auth.passwordHint")}
+          </p>
+        )}
       </div>
 
       {errors.submit && <p className="text-sm text-red-500">{errors.submit}</p>}
