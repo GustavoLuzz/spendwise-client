@@ -36,13 +36,13 @@ export function LoginForm() {
     const newErrors: Record<string, string> = {}
 
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required"
+      newErrors.email = t("auth.emailRequired")
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Email must be valid"
+      newErrors.email = t("auth.emailInvalid")
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password = t("auth.passwordRequired")
     }
 
     setErrors(newErrors)
@@ -73,10 +73,10 @@ export function LoginForm() {
         const message = getServerMessage(error.response?.data)
         setErrors(prev => ({
           ...prev,
-          submit: message ?? "Invalid email or password",
+          submit: message ?? t("auth.invalidCredentials"),
         }))
       } else {
-        setErrors(prev => ({ ...prev, submit: "An unexpected error occurred" }))
+        setErrors(prev => ({ ...prev, submit: t("auth.unexpectedError") }))
       }
     } finally {
       setLoading(false)
