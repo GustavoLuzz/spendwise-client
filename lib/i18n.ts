@@ -104,6 +104,7 @@ const messages: Record<Locale, Messages> = {
     "newTransaction.helpTitle": "How transactions work",
     "newTransaction.helpAmount":
       "Use the absolute value. Separators follow the selected currency, and SpendWise applies the sign based on income or expense.",
+    "newTransaction.exchangeRateLoading": "Wait for the exchange rate before saving a value in reais.",
     "newTransaction.helpType":
       "Expense reduces your balance. Income increases it.",
     "newTransaction.helpCategory":
@@ -298,6 +299,7 @@ const messages: Record<Locale, Messages> = {
     "newTransaction.helpTitle": "Como as transações funcionam",
     "newTransaction.helpAmount":
       "Use o valor absoluto. Os separadores seguem a moeda selecionada, e o SpendWise aplica o sinal conforme ganho ou despesa.",
+    "newTransaction.exchangeRateLoading": "Aguarde a cotação antes de salvar um valor em reais.",
     "newTransaction.helpType":
       "Despesa reduz seu saldo. Ganho aumenta seu saldo.",
     "newTransaction.helpCategory":
