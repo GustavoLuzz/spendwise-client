@@ -134,7 +134,7 @@ export default function ProfilePage() {
         <header className="flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-[var(--shadow-surface)] transition-[background-color,transform] duration-150 ease-out hover:bg-zinc-100 active:scale-95 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
             aria-label={t("common.back")}
           >
             <ArrowLeft className="h-5 w-5" />
@@ -149,7 +149,7 @@ export default function ProfilePage() {
 
         <section className="mt-8 text-center">
           <div className="relative mx-auto h-24 w-24">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full border border-zinc-200 bg-gradient-to-br from-zinc-100 to-white text-2xl font-semibold shadow-sm dark:border-zinc-800 dark:from-zinc-800 dark:to-zinc-900">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border border-zinc-200 bg-gradient-to-br from-zinc-100 to-white text-2xl font-semibold shadow-[var(--shadow-surface)] dark:border-zinc-800 dark:from-zinc-800 dark:to-zinc-900">
               {loading ? (
                 <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
               ) : (
@@ -161,10 +161,10 @@ export default function ProfilePage() {
             </span>
           </div>
 
-          <h1 className="mt-4 text-xl font-semibold">
+          <h1 className="mt-4 text-balance text-xl font-semibold">
             {loading ? t("profile.loading") : user?.name ?? "SpendWise User"}
           </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-pretty text-sm text-zinc-500 dark:text-zinc-400">
             {user?.email ?? t("profile.accountDetails")}
           </p>
           <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-500 shadow-sm dark:bg-zinc-900 dark:text-zinc-400">
@@ -184,7 +184,7 @@ export default function ProfilePage() {
             {t("profile.account")}
           </p>
 
-          <div className="mt-3 overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mt-3 overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-[var(--shadow-surface)] dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center gap-3 px-4 py-4">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                 <UserRound className="h-5 w-5" />
@@ -222,7 +222,7 @@ export default function ProfilePage() {
             {t("profile.preferences")}
           </p>
 
-          <div className="mt-3 overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mt-3 overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-[var(--shadow-surface)] dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center gap-3 px-4 py-4">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                 <Languages className="h-5 w-5" />
@@ -273,7 +273,7 @@ export default function ProfilePage() {
             {t("profile.security")}
           </p>
 
-          <div className="mt-3 overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mt-3 overflow-hidden rounded-3xl border border-zinc-100 bg-white shadow-[var(--shadow-surface)] dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center gap-3 px-4 py-4">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                 <ShieldCheck className="h-5 w-5" />

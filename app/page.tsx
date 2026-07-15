@@ -217,7 +217,7 @@ export default function Home() {
       <div className="mx-auto w-full max-w-sm px-4 pb-28 pt-6">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-lg font-semibold">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-[var(--shadow-surface)] dark:border-zinc-800 dark:bg-zinc-900">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 16 16"
@@ -232,14 +232,14 @@ export default function Home() {
           </div>
           <Link
             href="/profile"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-700 dark:text-zinc-300"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-zinc-700 transition-[background-color,transform] duration-150 ease-out hover:bg-white active:scale-95 dark:text-zinc-300 dark:hover:bg-zinc-900"
             aria-label="Go to profile"
           >
             <ArrowRight className="h-5 w-5" />
           </Link>
         </header>
 
-        <section className="mt-6 rounded-3xl bg-gradient-to-br from-white to-zinc-200/80 p-6 shadow-sm dark:from-zinc-900 dark:to-zinc-800">
+        <section className="mt-6 overflow-hidden rounded-[28px] bg-gradient-to-br from-white to-zinc-200/80 p-6 shadow-[var(--shadow-surface)] dark:from-zinc-900 dark:to-zinc-800">
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
             {t("dashboard.totalBalance")}
           </p>
@@ -248,7 +248,7 @@ export default function Home() {
           >
             {totalBalanceValue}
           </p>
-          <div className="mt-3 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+          <div className="mt-3 flex items-center gap-2 text-pretty text-sm text-zinc-500 dark:text-zinc-400">
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
                 balanceTrend >= 0
@@ -310,7 +310,7 @@ export default function Home() {
             return (
               <div
                 key={item.label}
-                className="flex items-center justify-between rounded-3xl border border-zinc-100 bg-white px-5 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex items-center justify-between rounded-3xl border border-zinc-100 bg-white px-5 py-4 shadow-[var(--shadow-surface)] transition-[box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
@@ -332,7 +332,7 @@ export default function Home() {
           })}
         </div>
 
-        <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-[var(--shadow-surface)] dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
@@ -359,7 +359,7 @@ export default function Home() {
             </span>
           </div>
 
-          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-3 text-pretty text-sm text-zinc-500 dark:text-zinc-400">
             {loading ? t("dashboard.loadingInsight") : snapshotMessage}
           </p>
 
@@ -404,12 +404,12 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <section className="mt-6 rounded-3xl border border-zinc-100 bg-white p-6 shadow-[var(--shadow-surface)] dark:border-zinc-800 dark:bg-zinc-900">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">
               {t("dashboard.recentActivity")}
             </h2>
-            <Link href="/transactions" className="text-sm text-zinc-500 dark:text-zinc-400">
+            <Link href="/transactions" className="inline-flex min-h-11 items-center rounded-xl px-2 text-sm text-zinc-500 transition-colors duration-150 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800">
               {t("dashboard.viewAll")}
             </Link>
           </div>
@@ -477,7 +477,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 p-6 text-white shadow-sm">
+        <section className="relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 p-6 text-white shadow-[var(--shadow-surface)]">
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-400">
             {t("dashboard.savingsGoal")}
           </p>
@@ -497,7 +497,7 @@ export default function Home() {
       <Button
         asChild
         size="icon"
-        className="fixed bottom-24 right-6 h-12 w-12 rounded-full bg-zinc-900 text-white shadow-lg hover:bg-zinc-800"
+        className="fixed bottom-24 right-6 h-12 w-12 rounded-full bg-zinc-900 text-white shadow-[0_12px_24px_-12px_rgb(24_24_27_/_0.7)] hover:bg-zinc-800"
         aria-label="Add transaction"
       >
         <Link href="/transactions/new">
