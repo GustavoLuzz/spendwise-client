@@ -196,10 +196,6 @@ function NewTransactionContent() {
       newErrors.amount = t("newTransaction.amountMax")
     }
 
-    if (!formData.description.trim()) {
-      newErrors.description = t("newTransaction.descriptionRequired")
-    }
-
     if (!formData.categoryId) {
       newErrors.categoryId = t("newTransaction.categoryRequired")
     }
@@ -342,11 +338,6 @@ function NewTransactionContent() {
                 disabled={loading}
                 className="mt-3 w-full bg-transparent text-base text-zinc-700 placeholder:text-zinc-400 outline-none dark:text-zinc-100 dark:placeholder:text-zinc-600"
               />
-              {errors.description && (
-                <p className="mt-2 text-sm text-rose-500">
-                  {errors.description}
-                </p>
-              )}
             </div>
 
             <div className="rounded-3xl bg-zinc-100/70 p-5 dark:bg-zinc-900">
