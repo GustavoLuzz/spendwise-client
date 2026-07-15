@@ -144,7 +144,9 @@ export function convertAmountToBaseCurrency(
   amount: number,
   currency: Currency
 ) {
-  return currency === "BRL" ? amount / usdBrlRate : amount
+  const convertedAmount = currency === "BRL" ? amount / usdBrlRate : amount
+
+  return Math.round((convertedAmount + Number.EPSILON) * 100) / 100
 }
 
 export function getCurrencySymbol(locale: Locale, currency: Currency) {
