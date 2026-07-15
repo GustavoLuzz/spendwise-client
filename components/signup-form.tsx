@@ -11,7 +11,7 @@ import { useI18n } from "@/lib/i18n"
 import { createUser } from "@/lib/users"
 
 const PASSWORD_MIN_LENGTH = 8
-const PASSWORD_MAX_LENGTH = 72
+const PASSWORD_MAX_LENGTH = 32
 const PASSWORD_CONTENT_PATTERN = /^(?=.*\p{L})(?=.*\d)[^\p{Cc}]+$/u
 
 export function SignupForm() {
@@ -173,6 +173,7 @@ export function SignupForm() {
           type="password"
           placeholder={t("auth.passwordPlaceholder")}
           autoComplete="new-password"
+          maxLength={PASSWORD_MAX_LENGTH}
           value={formData.password}
           onChange={handleChange}
           onFocus={() => handleFocus("password")}
