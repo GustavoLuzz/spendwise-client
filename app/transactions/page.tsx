@@ -23,6 +23,7 @@ import {
 import { type Locale, useI18n } from "@/lib/i18n"
 import {
   fetchTransactions,
+  getTransactionBaseAmount,
   type Transaction,
   type TransactionPage,
 } from "@/lib/transactions"
@@ -160,7 +161,7 @@ const groupTransactions = (transactions: Transaction[]): GroupedTransactions[] =
   transactions.forEach((transaction) => {
     const transactionDate = getTransactionDate(transaction)
     const key = getDateKey(transactionDate)
-    const amount = Number(transaction.amount)
+    const amount = getTransactionBaseAmount(transaction)
     const current = grouped.get(key)
 
     if (current) {
@@ -558,7 +559,7 @@ export default function TransactionsPage() {
                           }`}
                         >
                           {formatCurrency(
-                            Number(item.amount),
+                            getTransactionBaseAmount(item),
                             item.categoryType,
                             locale,
                             currency
@@ -671,7 +672,7 @@ export default function TransactionsPage() {
                 </p>
                 <p className="mt-2 text-3xl font-semibold font-mono tabular-nums">
                   {formatCurrency(
-                    Number(selectedTransaction.amount),
+                    getTransactionBaseAmount(selectedTransaction),
                     selectedTransaction.categoryType,
                     locale,
                     currency

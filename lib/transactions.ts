@@ -1,9 +1,14 @@
 import { api } from "@/lib/api"
+import {
+  convertAmountToBaseCurrency,
+  type Currency,
+} from "@/lib/currency"
 
 export type Transaction = {
   id: string
   description: string
   amount: number
+  currency?: Currency | null
   createdAt: string
   optionalDate: string | null
   categoryId: string | null
@@ -14,6 +19,7 @@ export type Transaction = {
 export type CreateTransactionPayload = {
   description: string
   amount: number
+  currency: Currency
   categoryId: string
   optionalDate?: string | null
 }
@@ -50,4 +56,11 @@ export async function createTransaction(payload: CreateTransactionPayload) {
 
 export async function deleteTransaction(id: string) {
   await api.delete(`/transactions/${id}`)
+}
+
+export function getTransactionBaseAmount(transaction: Transaction) {
+  return convertAmountToBaseCurrency(
+    Number(transaction.amount),
+    transaction.currency ?? "USD"
+  )
 }

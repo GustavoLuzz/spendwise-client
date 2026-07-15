@@ -27,7 +27,6 @@ import {
 import { fetchCategoriesByType } from "@/lib/categories"
 import { getCategoryLabel } from "@/lib/category-label"
 import {
-  convertAmountToBaseCurrency,
   formatMoneyInput,
   getCurrencySymbol,
   parseMoneyInput,
@@ -219,7 +218,8 @@ function NewTransactionContent() {
 
       await createTransaction({
         description: formData.description.trim(),
-        amount: convertAmountToBaseCurrency(amountValue, currency),
+        amount: amountValue,
+        currency,
         categoryId: formData.categoryId,
         optionalDate: dateString,
       })

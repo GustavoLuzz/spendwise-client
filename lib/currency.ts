@@ -144,9 +144,7 @@ export function convertAmountToBaseCurrency(
   amount: number,
   currency: Currency
 ) {
-  const convertedAmount = currency === "BRL" ? amount / usdBrlRate : amount
-
-  return Math.round((convertedAmount + Number.EPSILON) * 100) / 100
+  return currency === "BRL" ? amount / usdBrlRate : amount
 }
 
 export function getCurrencySymbol(locale: Locale, currency: Currency) {
@@ -238,10 +236,8 @@ export function useCurrency() {
   const currency = currencySnapshot.split(":")[0] as Currency
 
   useEffect(() => {
-    if (currency === "BRL" && !hasLoadedExchangeRate) {
-      void loadExchangeRate()
-    }
-  }, [currency])
+    void loadExchangeRate()
+  }, [])
 
   return {
     currency,

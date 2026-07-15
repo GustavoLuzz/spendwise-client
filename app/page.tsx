@@ -18,7 +18,11 @@ import { AppFooterNav } from "@/components/app-footer-nav"
 import { Button } from "@/components/ui/button"
 import { formatCurrency, useCurrency } from "@/lib/currency"
 import { useI18n } from "@/lib/i18n"
-import { fetchTransactions, type Transaction } from "@/lib/transactions"
+import {
+  fetchTransactions,
+  getTransactionBaseAmount,
+  type Transaction,
+} from "@/lib/transactions"
 
 const parseDateOnly = (value: string) => {
   const [year, month, day] = value.split("-").map(Number)
@@ -31,7 +35,7 @@ const getTransactionDate = (transaction: Transaction) =>
     : new Date(transaction.createdAt)
 
 const getSignedAmount = (transaction: Transaction) => {
-  const amount = Math.abs(Number(transaction.amount))
+  const amount = Math.abs(getTransactionBaseAmount(transaction))
   return transaction.categoryType === "EXPENSE" ? -amount : amount
 }
 
@@ -138,14 +142,14 @@ export default function Home() {
       return total
     }
 
-    return total + Math.abs(Number(transaction.amount))
+    return total + Math.abs(getTransactionBaseAmount(transaction))
   }, 0)
   const monthlyExpenses = monthlyTransactions.reduce((total, transaction) => {
     if (transaction.categoryType !== "EXPENSE") {
       return total
     }
 
-    return total + Math.abs(Number(transaction.amount))
+    return total + Math.abs(getTransactionBaseAmount(transaction))
   }, 0)
   const recentActivity = [...transactions]
     .sort(
