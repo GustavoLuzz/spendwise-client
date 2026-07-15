@@ -226,7 +226,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <div className="mx-auto w-full max-w-sm px-4 pb-28 pt-6">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 md:px-6 lg:px-8">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-lg font-semibold">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-zinc-200 bg-white shadow-[var(--shadow-surface)] dark:border-zinc-800 dark:bg-zinc-900">
@@ -261,7 +261,7 @@ export default function Home() {
           </p>
         )}
 
-        <section className="mt-6 overflow-hidden rounded-[28px] bg-gradient-to-br from-white to-zinc-200/80 p-6 shadow-[var(--shadow-surface)] dark:from-zinc-900 dark:to-zinc-800">
+        <section className="mt-6 overflow-hidden rounded-[28px] bg-gradient-to-br from-white to-zinc-200/80 p-6 shadow-[var(--shadow-surface)] lg:p-8 dark:from-zinc-900 dark:to-zinc-800">
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
             {t("dashboard.totalBalance")}
           </p>
@@ -326,7 +326,7 @@ export default function Home() {
           </p>
         )}
 
-        <div className="mt-6 grid gap-4">
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
           {stats.map((item) => {
             const Icon = item.icon
             return (
@@ -512,7 +512,7 @@ export default function Home() {
       <Button
         asChild
         size="icon"
-        className="fixed bottom-24 right-6 h-12 w-12 rounded-full bg-zinc-900 text-white shadow-[0_12px_24px_-12px_rgb(24_24_27_/_0.7)] hover:bg-zinc-800"
+        className="fixed bottom-24 right-6 h-12 w-12 rounded-full bg-zinc-900 text-white shadow-[0_12px_24px_-12px_rgb(24_24_27_/_0.7)] hover:bg-zinc-800 lg:hidden"
         aria-label="Add transaction"
       >
         <Link href="/transactions/new">

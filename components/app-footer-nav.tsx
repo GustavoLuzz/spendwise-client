@@ -20,7 +20,7 @@ export function AppFooterNav({ activeHref }: AppFooterNavProps) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
-      <div className="mx-auto flex max-w-sm items-center justify-between px-6 py-3">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3 lg:px-8">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = item.href === activeHref

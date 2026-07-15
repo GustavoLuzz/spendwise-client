@@ -232,7 +232,7 @@ export default function CategoriesPage() {
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <div className="mx-auto w-full max-w-sm px-4 pb-28 pt-5">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-28 pt-5 md:px-6 lg:px-8">
         <header className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-base font-semibold">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
@@ -250,8 +250,8 @@ export default function CategoriesPage() {
           </Link>
         </header>
 
-        <main className="mt-8">
-          <section>
+        <main className="mt-8 lg:grid lg:grid-cols-2 lg:gap-x-8">
+          <section className="lg:col-span-2">
             <h1 className="text-2xl font-semibold leading-tight">
               {t("categories.title")}
             </h1>
@@ -260,7 +260,7 @@ export default function CategoriesPage() {
             </p>
           </section>
 
-          <section className="mt-7">
+          <section className="mt-7 lg:mt-8">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-[11px] font-semibold uppercase tracking-[0.28em] text-zinc-600 dark:text-zinc-400">
@@ -343,7 +343,7 @@ export default function CategoriesPage() {
             </div>
           </section>
 
-          <section className="mt-8">
+          <section className="mt-8 lg:mt-8">
             <div>
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.28em] text-zinc-600 dark:text-zinc-400">
                 {t("categories.defaultTitle")}

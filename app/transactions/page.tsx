@@ -373,7 +373,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <div className="mx-auto w-full max-w-sm px-4 pb-28 pt-5">
+      <div className="mx-auto w-full max-w-4xl px-4 pb-28 pt-5 md:px-6 lg:px-8">
         <header className="flex items-center justify-between">
           <Link
             href="/"
