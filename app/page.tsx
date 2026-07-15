@@ -426,6 +426,14 @@ export default function Home() {
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {t("dashboard.noTransactions")}
                 </p>
+                <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                  {t("dashboard.addFirstMonthly")}
+                </p>
+                <Button asChild className="mt-4">
+                  <Link href="/transactions/new">
+                    {t("newTransaction.register")}
+                  </Link>
+                </Button>
               </div>
             ) : (
               recentActivity.map((item) => {
@@ -477,21 +485,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-zinc-900 to-zinc-800 p-6 text-white shadow-[var(--shadow-surface)]">
-          <p className="text-xs uppercase tracking-[0.35em] text-zinc-400">
-            {t("dashboard.savingsGoal")}
-          </p>
-          <p className="mt-3 text-lg font-semibold">
-            {t("dashboard.savingsGoalName")}
-          </p>
-          <div className="mt-5 h-2 w-full rounded-full bg-white/20">
-            <div className="h-2 w-2/3 rounded-full bg-white" />
-          </div>
-          <p className="mt-2 text-xs text-zinc-400">
-            {t("dashboard.savingsGoalProgress")}
-          </p>
-          <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-full border border-white/10" />
-        </section>
       </div>
 
       <Button
