@@ -28,6 +28,7 @@ import {
   type Transaction,
   type TransactionPage,
 } from "@/lib/transactions"
+import { transactionCreatedNoticeKey } from "@/lib/transaction-notice"
 
 const periodOptions = [
   { labelKey: "transactions.weekly", value: "week" as const },
@@ -224,6 +225,16 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState("")
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [showTransactionCreated, setShowTransactionCreated] = useState(false)
+
+  useEffect(() => {
+    if (window.sessionStorage.getItem(transactionCreatedNoticeKey) !== "/transactions") {
+      return
+    }
+
+    setShowTransactionCreated(true)
+    window.sessionStorage.removeItem(transactionCreatedNoticeKey)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -410,6 +421,15 @@ export default function TransactionsPage() {
             ))}
           </div>
         </section>
+
+        {showTransactionCreated && (
+          <p
+            role="status"
+            className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+          >
+            {t("common.transactionCreated")}
+          </p>
+        )}
 
         <form
           onSubmit={handleSearchSubmit}

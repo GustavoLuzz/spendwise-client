@@ -8,6 +8,7 @@ import {
   ArrowRight,
   ArrowUp,
   Banknote,
+  CheckCircle2,
   Loader2,
   Plus,
   Receipt,
@@ -23,6 +24,7 @@ import {
   getTransactionBaseAmount,
   type Transaction,
 } from "@/lib/transactions"
+import { transactionCreatedNoticeKey } from "@/lib/transaction-notice"
 
 const parseDateOnly = (value: string) => {
   const [year, month, day] = value.split("-").map(Number)
@@ -90,6 +92,16 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [showTransactionCreated, setShowTransactionCreated] = useState(false)
+
+  useEffect(() => {
+    if (window.sessionStorage.getItem(transactionCreatedNoticeKey) !== "/") {
+      return
+    }
+
+    setShowTransactionCreated(true)
+    window.sessionStorage.removeItem(transactionCreatedNoticeKey)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -238,6 +250,16 @@ export default function Home() {
             <ArrowRight className="h-5 w-5" />
           </Link>
         </header>
+
+        {showTransactionCreated && (
+          <p
+            role="status"
+            className="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+          >
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            {t("common.transactionCreated")}
+          </p>
+        )}
 
         <section className="mt-6 overflow-hidden rounded-[28px] bg-gradient-to-br from-white to-zinc-200/80 p-6 shadow-[var(--shadow-surface)] dark:from-zinc-900 dark:to-zinc-800">
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-500 dark:text-zinc-400">
