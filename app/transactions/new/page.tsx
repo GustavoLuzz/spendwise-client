@@ -34,6 +34,7 @@ import {
 } from "@/lib/currency"
 import { useI18n } from "@/lib/i18n"
 import { createTransaction } from "@/lib/transactions"
+import { transactionCreatedNoticeKey } from "@/lib/transaction-notice"
 import type { Category } from "@/lib/categories"
 
 const helpItems = [
@@ -223,6 +224,7 @@ function NewTransactionContent() {
         categoryId: formData.categoryId,
         optionalDate: dateString,
       })
+      window.sessionStorage.setItem(transactionCreatedNoticeKey, returnTo)
       router.push(returnTo)
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {

@@ -9,6 +9,7 @@ import {
   Loader2,
   Plus,
   Search,
+  SlidersHorizontal,
 } from "lucide-react"
 
 import { AppFooterNav } from "@/components/app-footer-nav"
@@ -27,6 +28,7 @@ import {
   type Transaction,
   type TransactionPage,
 } from "@/lib/transactions"
+import { transactionCreatedNoticeKey } from "@/lib/transaction-notice"
 
 const periodOptions = [
   { labelKey: "transactions.weekly", value: "week" as const },
@@ -222,6 +224,17 @@ export default function TransactionsPage() {
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [showTransactionCreated, setShowTransactionCreated] = useState(false)
+
+  useEffect(() => {
+    if (window.sessionStorage.getItem(transactionCreatedNoticeKey) !== "/transactions") {
+      return
+    }
+
+    setShowTransactionCreated(true)
+    window.sessionStorage.removeItem(transactionCreatedNoticeKey)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -350,9 +363,17 @@ export default function TransactionsPage() {
     setCategoryId(value)
   }
 
+  const clearFilters = () => {
+    setPage(0)
+    setCategoryType("all")
+    setCategoryId("")
+  }
+
+  const activeFiltersCount = Number(categoryType !== "all") + Number(Boolean(categoryId))
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <div className="mx-auto w-full max-w-sm px-4 pb-28 pt-5">
+      <div className="mx-auto w-full max-w-4xl px-4 pb-28 pt-5 md:px-6 lg:px-8">
         <header className="flex items-center justify-between">
           <Link
             href="/"
@@ -401,6 +422,15 @@ export default function TransactionsPage() {
           </div>
         </section>
 
+        {showTransactionCreated && (
+          <p
+            role="status"
+            className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+          >
+            {t("common.transactionCreated")}
+          </p>
+        )}
+
         <form
           onSubmit={handleSearchSubmit}
           className="mt-4 flex items-center gap-3 rounded-3xl bg-white px-4 py-3 shadow-sm dark:bg-zinc-900"
@@ -417,51 +447,70 @@ export default function TransactionsPage() {
           </Button>
         </form>
 
-        <section className="mt-4 flex flex-wrap items-center gap-2">
-          {categoryTypeOptions.map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => handleCategoryTypeChange(item.value)}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold shadow-sm ${
-                categoryType === item.value
-                  ? "bg-zinc-900 text-white"
-                  : "bg-white text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"
-              }`}
-            >
-              {t(item.labelKey)}
-            </button>
-          ))}
-        </section>
-
-        <div className="relative mt-3">
-          <section className="flex items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <section className="mt-4">
+          <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => handleCategoryChange("")}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold shadow-sm ${
-                categoryId === "" ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900" : "bg-white text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"
-              }`}
+              onClick={() => setIsFiltersOpen((isOpen) => !isOpen)}
+              aria-expanded={isFiltersOpen}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition-colors hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
             >
-              {t("transactions.allCategories")}
+              <SlidersHorizontal className="h-4 w-4" />
+              {t("transactions.filters")}
+              {activeFiltersCount > 0 && (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-zinc-900 px-1.5 py-0.5 text-[10px] text-white dark:bg-zinc-50 dark:text-zinc-900">
+                  {activeFiltersCount}
+                </span>
+              )}
             </button>
-            {filteredCategories.map((category) => (
-              <button
-                key={category.id}
+            {activeFiltersCount > 0 && (
+              <Button
                 type="button"
-                onClick={() => handleCategoryChange(category.id)}
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold shadow-sm ${
-                  categoryId === category.id
-                    ? "bg-white text-zinc-900 dark:bg-zinc-50 dark:text-zinc-900"
-                    : "bg-zinc-100 text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"
-                }`}
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="min-h-11 rounded-full px-3 text-zinc-500 dark:text-zinc-400"
               >
-                {getCategoryLabel(category.name, category.isGlobal, t)}
-              </button>
-            ))}
-          </section>
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-zinc-50 to-transparent dark:from-zinc-950" />
-        </div>
+                {t("transactions.clearFilters")}
+              </Button>
+            )}
+          </div>
+
+          {isFiltersOpen && (
+            <div className="mt-3 grid gap-3 rounded-3xl bg-white p-4 shadow-sm dark:bg-zinc-900 sm:grid-cols-2">
+              <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                {t("transactions.filterType")}
+                <select
+                  value={categoryType}
+                  onChange={(event) => handleCategoryTypeChange(event.target.value as FilterType)}
+                  className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium normal-case tracking-normal text-zinc-900 outline-none focus:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-600"
+                >
+                  {categoryTypeOptions.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {t(item.labelKey)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+                {t("transactions.filterCategory")}
+                <select
+                  value={categoryId}
+                  onChange={(event) => handleCategoryChange(event.target.value)}
+                  disabled={loadingCategories}
+                  className="h-11 rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-sm font-medium normal-case tracking-normal text-zinc-900 outline-none focus:border-zinc-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-zinc-600"
+                >
+                  <option value="">{t("transactions.allCategories")}</option>
+                  {filteredCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {getCategoryLabel(category.name, category.isGlobal, t)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+        </section>
 
         <section className="mt-5 space-y-4">
           {loading ? (
