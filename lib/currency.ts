@@ -1,6 +1,7 @@
 "use client"
 
-import { useSyncExternalStore } from "react"
+import { useEffect, useSyncExternalStore } from "react"
+import { convertCurrency } from "@/lib/exchange-rates"
 import type { Locale } from "@/lib/i18n"
 
 export const currencies = ["USD", "BRL"] as const
@@ -8,6 +9,7 @@ export const currencies = ["USD", "BRL"] as const
 export type Currency = (typeof currencies)[number]
 
 const STORAGE_KEY = "spendwise-currency"
+const EXCHANGE_RATE_STORAGE_KEY = "spendwise-usd-brl-rate"
 const DEFAULT_CURRENCY: Currency = "USD"
 const currencyLocales: Record<Currency, string> = {
   USD: "en-US",
@@ -15,6 +17,11 @@ const currencyLocales: Record<Currency, string> = {
 }
 
 let currentCurrency: Currency = DEFAULT_CURRENCY
+let usdBrlRate = 1
+let hasLoadedExchangeRate = false
+let isExchangeRateLoading = false
+let exchangeRateRequest: Promise<boolean> | null = null
+let currencyVersion = 0
 const listeners = new Set<() => void>()
 
 const isCurrency = (value: string | null): value is Currency =>
@@ -29,11 +36,73 @@ const getStoredCurrency = () => {
   return isCurrency(stored) ? stored : DEFAULT_CURRENCY
 }
 
+const loadStoredExchangeRate = () => {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  const storedRate = Number(
+    window.localStorage.getItem(EXCHANGE_RATE_STORAGE_KEY)
+  )
+
+  if (Number.isFinite(storedRate) && storedRate > 0) {
+    usdBrlRate = storedRate
+    hasLoadedExchangeRate = true
+  }
+}
+
 const emit = () => {
+  currencyVersion += 1
   listeners.forEach((listener) => listener())
 }
 
-export function setCurrency(currency: Currency) {
+async function loadExchangeRate() {
+  if (exchangeRateRequest) {
+    return exchangeRateRequest
+  }
+
+  isExchangeRateLoading = true
+  emit()
+
+  exchangeRateRequest = convertCurrency("USD", "BRL", 1)
+    .then((conversion) => {
+      if (!Number.isFinite(conversion.rate) || conversion.rate <= 0) {
+        throw new Error("Invalid exchange rate")
+      }
+
+      usdBrlRate = conversion.rate
+      hasLoadedExchangeRate = true
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(
+          EXCHANGE_RATE_STORAGE_KEY,
+          String(conversion.rate)
+        )
+      }
+
+      return true
+    })
+    .catch(() => false)
+    .finally(() => {
+      isExchangeRateLoading = false
+      exchangeRateRequest = null
+      emit()
+    })
+
+  return exchangeRateRequest
+}
+
+export async function setCurrency(currency: Currency) {
+  if (currency === currentCurrency) {
+    return true
+  }
+
+  const rateLoaded = await loadExchangeRate()
+
+  if (!rateLoaded) {
+    return false
+  }
+
   currentCurrency = currency
 
   if (typeof window !== "undefined") {
@@ -41,11 +110,13 @@ export function setCurrency(currency: Currency) {
   }
 
   emit()
+  return true
 }
 
 export function getCurrencySnapshot() {
   currentCurrency = getStoredCurrency()
-  return currentCurrency
+  loadStoredExchangeRate()
+  return `${currentCurrency}:${currencyVersion}`
 }
 
 export function subscribeCurrency(listener: () => void) {
@@ -61,10 +132,19 @@ export function formatCurrency(
   locale: Locale,
   currency: Currency
 ) {
+  const convertedAmount = currency === "BRL" ? amount * usdBrlRate : amount
+
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
-  }).format(amount)
+  }).format(convertedAmount)
+}
+
+export function convertAmountToBaseCurrency(
+  amount: number,
+  currency: Currency
+) {
+  return currency === "BRL" ? amount / usdBrlRate : amount
 }
 
 export function getCurrencySymbol(locale: Locale, currency: Currency) {
@@ -148,14 +228,23 @@ export function parseMoneyInput(value: string, currency: Currency) {
 }
 
 export function useCurrency() {
-  const currency = useSyncExternalStore(
+  const currencySnapshot = useSyncExternalStore(
     subscribeCurrency,
     getCurrencySnapshot,
-    () => DEFAULT_CURRENCY
+    () => `${DEFAULT_CURRENCY}:0`
   )
+  const currency = currencySnapshot.split(":")[0] as Currency
+
+  useEffect(() => {
+    if (currency === "BRL" && !hasLoadedExchangeRate) {
+      void loadExchangeRate()
+    }
+  }, [currency])
 
   return {
     currency,
     setCurrency,
+    isExchangeRateLoading,
+    hasExchangeRate: hasLoadedExchangeRate,
   }
 }

@@ -27,6 +27,7 @@ import {
 import { fetchCategoriesByType } from "@/lib/categories"
 import { getCategoryLabel } from "@/lib/category-label"
 import {
+  convertAmountToBaseCurrency,
   formatMoneyInput,
   getCurrencySymbol,
   parseMoneyInput,
@@ -61,7 +62,7 @@ function NewTransactionContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { locale, t } = useI18n()
-  const { currency } = useCurrency()
+  const { currency, hasExchangeRate, isExchangeRateLoading } = useCurrency()
   const returnTo = searchParams.get("from") === "transactions" ? "/transactions" : "/"
   const [type, setType] = useState<"expense" | "income">("expense")
   const [formData, setFormData] = useState({
@@ -181,6 +182,10 @@ function NewTransactionContent() {
     const newErrors: Record<string, string> = {}
     const amountValue = parseMoneyInput(formData.amount, currency)
 
+    if (currency === "BRL" && (!hasExchangeRate || isExchangeRateLoading)) {
+      newErrors.amount = t("newTransaction.exchangeRateLoading")
+    }
+
     if (!formData.amount.trim()) {
       newErrors.amount = t("newTransaction.amountRequired")
     } else if (amountValue === null) {
@@ -218,7 +223,7 @@ function NewTransactionContent() {
 
       await createTransaction({
         description: formData.description.trim(),
-        amount: amountValue,
+        amount: convertAmountToBaseCurrency(amountValue, currency),
         categoryId: formData.categoryId,
         optionalDate: dateString,
       })

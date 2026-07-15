@@ -20,7 +20,6 @@ import {
 } from "lucide-react"
 
 import { AppFooterNav } from "@/components/app-footer-nav"
-import { CurrencyConverter } from "@/components/currency-converter"
 import { CurrencySelect } from "@/components/currency-select"
 import { LanguageSelect } from "@/components/language-select"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -268,8 +267,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
-
-        <CurrencyConverter />
 
         <section className="mt-6">
           <p className="px-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-400">
