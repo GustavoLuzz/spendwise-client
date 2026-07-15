@@ -176,11 +176,11 @@ const messages: Record<Locale, Messages> = {
     "auth.emailInvalid": "Enter a valid email address.",
     "auth.emailAlreadyRegistered": "This email is already registered.",
     "auth.passwordRequired": "Password is required.",
-    "auth.passwordLength": "Password must be between 8 and 72 characters.",
+    "auth.passwordLength": "Password must be between 8 and 32 characters.",
     "auth.passwordPattern":
       "Password must include at least one letter and one number. Special characters are allowed.",
     "auth.passwordHint":
-      "Use 8 to 72 characters with at least one letter and one number. Special characters are allowed.",
+      "Use 8 to 32 characters with at least one letter and one number. Special characters are allowed.",
     "auth.createAccountFailed": "Unable to create your account. Check the fields and try again.",
     "auth.invalidCredentials": "Invalid email or password.",
     "auth.unexpectedError": "An unexpected error occurred. Try again.",
@@ -356,11 +356,11 @@ const messages: Record<Locale, Messages> = {
     "auth.emailInvalid": "Digite um email válido.",
     "auth.emailAlreadyRegistered": "Este email já está cadastrado.",
     "auth.passwordRequired": "A senha é obrigatória.",
-    "auth.passwordLength": "A senha deve ter entre 8 e 72 caracteres.",
+    "auth.passwordLength": "A senha deve ter entre 8 e 32 caracteres.",
     "auth.passwordPattern":
       "A senha deve ter pelo menos uma letra e um número. Caracteres especiais são permitidos.",
     "auth.passwordHint":
-      "Use de 8 a 72 caracteres com pelo menos uma letra e um número. Caracteres especiais são permitidos.",
+      "Use de 8 a 32 caracteres com pelo menos uma letra e um número. Caracteres especiais são permitidos.",
     "auth.createAccountFailed": "Não foi possível criar sua conta. Confira os campos e tente novamente.",
     "auth.invalidCredentials": "Email ou senha inválidos.",
     "auth.unexpectedError": "Ocorreu um erro inesperado. Tente novamente.",
